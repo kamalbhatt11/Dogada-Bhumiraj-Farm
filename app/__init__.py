@@ -2,23 +2,42 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from pathlib import Path
-db=SQLAlchemy(); login_manager=LoginManager(); login_manager.login_view="admin.login"
+
+db = SQLAlchemy()
+login_manager = LoginManager()
+login_manager.login_view = "admin.login"
+
+
 def create_app():
-    app=Flask(__name__); app.config.from_object("config.Config")
-    Path(app.instance_path).mkdir(parents=True,exist_ok=True)
-    db.init_app(app); login_manager.init_app(app)
-    app.jinja_env.filters["fromjson"]=lambda v: __import__("json").loads(v)
-    from .routes import main,admin
-    app.register_blueprint(main); app.register_blueprint(admin,url_prefix="/owner")
+    app = Flask(__name__)
+    app.config.from_object("config.Config")
+
+    Path(app.instance_path).mkdir(parents=True, exist_ok=True)
+
+    db.init_app(app)
+    login_manager.init_app(app)
+
+    app.jinja_env.filters["fromjson"] = lambda v: __import__("json").loads(v)
+
+    from .routes import main, admin
+    app.register_blueprint(main)
+    app.register_blueprint(admin, url_prefix="/owner")
+
     with app.app_context():
-        from .models import Product,Admin,Animal,Vaccination
-        db.create_all(); seed()
+        from .models import Product, Admin, Animal, Vaccination
+
+        db.create_all()
+        seed()
+
     return app
+
+
 def seed():
     from .models import Product, Admin
     from werkzeug.security import generate_password_hash
     import os
 
+    # Create products if database is empty
     if not Product.query.first():
         data = [
             ("Cow Milk", "cow-milk", 80, "liter", "Dairy", "Fresh local cow milk.", "🥛"),
@@ -27,9 +46,12 @@ def seed():
             ("Mahi", "mahi", 70, "liter", "Dairy", "Refreshing traditional dairy drink.", "🥤"),
             ("Paneer", "paneer", 700, "kg", "Dairy", "Fresh paneer made from quality milk.", "🧀"),
             ("Ghee", "ghee", 1000, "kg", "Dairy", "Rich dairy ghee.", "🫙"),
-            ("Cow", "cow", None, "on request", "Livestock", "Healthy cows. Ask about breed, age, availability and price.", "🐄"),
-            ("Buffalo", "buffalo", None, "on request", "Livestock", "Buffalo available based on current stock.", "🐃"),
-            ("Calf", "calf", None, "on request", "Livestock", "Calves available based on current stock.", "🐮")
+            ("Cow", "cow", None, "on request", "Livestock",
+             "Healthy cows. Ask about breed, age, availability and price.", "🐄"),
+            ("Buffalo", "buffalo", None, "on request", "Livestock",
+             "Buffalo available based on current stock.", "🐃"),
+            ("Calf", "calf", None, "on request", "Livestock",
+             "Calves available based on current stock.", "🐮")
         ]
 
         db.session.add_all([
@@ -47,10 +69,10 @@ def seed():
 
         db.session.commit()
 
-        owner = Admin.query.filter_by(username="owner").first()
-
-       # Temporary password reset/create for Render
+    # Always get the owner AFTER the database has been initialized
     owner = Admin.query.filter_by(username="owner").first()
+
+    # Temporary password reset
     reset_password = os.environ.get("RESET_OWNER_PASSWORD")
 
     if reset_password and len(reset_password) >= 10:
@@ -65,15 +87,14 @@ def seed():
 
         db.session.commit()
 
-    # Create owner account on first deployment
+    # Create owner on first deployment
     elif not owner:
         password = os.environ.get("INITIAL_OWNER_PASSWORD")
 
         if password and len(password) >= 10:
-            db.session.add(
-                Admin(
-                    username="owner",
-                    password_hash=generate_password_hash(password)
-                )
+            owner = Admin(
+                username="owner",
+                password_hash=generate_password_hash(password)
             )
+            db.session.add(owner)
             db.session.commit()
