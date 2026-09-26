@@ -47,10 +47,26 @@ def seed():
 
         db.session.commit()
 
-    owner = Admin.query.filter_by(username="owner").first()
+        owner = Admin.query.filter_by(username="owner").first()
 
-    # Create owner account if one does not exist
-    if not owner:
+       # Temporary password reset/create for Render
+    owner = Admin.query.filter_by(username="owner").first()
+    reset_password = os.environ.get("RESET_OWNER_PASSWORD")
+
+    if reset_password and len(reset_password) >= 10:
+        if owner:
+            owner.password_hash = generate_password_hash(reset_password)
+        else:
+            owner = Admin(
+                username="owner",
+                password_hash=generate_password_hash(reset_password)
+            )
+            db.session.add(owner)
+
+        db.session.commit()
+
+    # Create owner account on first deployment
+    elif not owner:
         password = os.environ.get("INITIAL_OWNER_PASSWORD")
 
         if password and len(password) >= 10:
@@ -60,14 +76,4 @@ def seed():
                     password_hash=generate_password_hash(password)
                 )
             )
-            db.session.commit()
-
-    # Reset existing owner password when requested
-    reset_password = os.environ.get("RESET_OWNER_PASSWORD")
-
-    if reset_password and len(reset_password) >= 10:
-        owner = Admin.query.filter_by(username="owner").first()
-
-        if owner:
-            owner.password_hash = generate_password_hash(reset_password)
             db.session.commit()
