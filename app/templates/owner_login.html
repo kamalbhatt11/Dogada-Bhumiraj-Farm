@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Owner Login | Shree Dogada Farm{% endblock %}
+{% block content %}
+<section class="auth-page">
+    <div class="auth-glow"></div>
+    <div class="premium-form auth-card form">
+        <div class="auth-icon">🔐</div><span class="eyebrow">PRIVATE AREA</span><h1>Owner login</h1><p>Sign in to manage orders, products and inquiries.</p>
+        <form method="post"><label>Username<input name="username" placeholder="Username" autocomplete="username" required></label><label>Password<input type="password" name="password" placeholder="Password" autocomplete="current-password" required></label><button class="btn primary full">Sign in →</button></form>
+        <small class="dev-note">Development login: owner / ChangeMe123!</small>
+    </div>
+</section>
+{% endblock %}

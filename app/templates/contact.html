@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block title %}Contact Shree Dogada Farm | Dhangadhi, Nepal{% endblock %}
+
+{% block meta_description %}
+<meta name="description"
+      content="Contact Shree Dogada Bhumiraj Pashupanchhi Farm in Dhangadhi-13, Sudurpashchim, Nepal. Call, WhatsApp or send an inquiry about fresh dairy products, livestock and orders.">
+{% endblock %}
+
+{% block content %}
+<section class="inner-hero contact-hero">
+  <div class="inner-orb orb-a"></div>
+  <div class="inner-orb orb-b"></div>
+
+  <div class="inner-hero-content">
+    <span class="eyebrow">CONTACT THE FARM</span>
+
+    <h1>Let's talk about <em>freshness.</em></h1>
+
+    <p>
+      Have a question about dairy, livestock or an order? Send us a message and
+      we'll get back to you.
+    </p>
+  </div>
+</section>
+
+<section class="inner-section contact-section">
+  <div class="contact-grid">
+
+    <div class="contact-info">
+      <span class="eyebrow">GET IN TOUCH</span>
+
+      <h2>We'd love to hear from you.</h2>
+
+      <p>Reach the farm directly using any of the options below.</p>
+
+      <div class="contact-item">
+        <span>📍</span>
+        <div>
+          <b>Farm location</b>
+        <small>Dhangadhi-13, Sudurpashchim Pradesh, Nepal</small>
+        </div>
+      </div>
+
+      <div class="contact-item">
+        <span>📞</span>
+        <div>
+          <b>Phone</b>
+          <small>
+            <a href="tel:9766968659">9766968659</a><br>
+            <a href="tel:9848751916">9848751916</a>
+          </small>
+        </div>
+      </div>
+
+      <div class="contact-item">
+        <span>✉️</span>
+        <div>
+          <b>Email</b>
+          <small>
+            <a href="mailto:bhattakamal780@gmail.com">
+              bhattakamal780@gmail.com
+            </a>
+          </small>
+        </div>
+      </div>
+
+      <a
+        class="btn whatsapp"
+        href="https://wa.me/9779766968659?text=Hello%20Shree%20Dogada%20Farm"
+        target="_blank"
+      >
+        WhatsApp the farm →
+      </a>
+    </div>
+
+    <form class="premium-form form" method="post" action="/inquiry">
+      <span class="eyebrow">SEND A MESSAGE</span>
+
+      <h2>How can we help?</h2>
+
+      <label>
+        Name
+        <input name="name" placeholder="Your name" required />
+      </label>
+
+      <label>
+        Phone
+        <input name="phone" placeholder="Your phone number" required />
+      </label>
+
+      <label>
+        Email <span class="optional-text">(Optional)</span>
+        <input type="email" name="email" placeholder="you@example.com" />
+      </label>
+
+      <label>
+        Message
+        <textarea
+          name="message"
+          placeholder="Tell us what you need..."
+          required
+        >{% if request.args.get("animal") %}I am interested in buying animal #{{ request.args.get("animal") }}. Please contact me with details.{% endif %}</textarea>
+      </label>
+
+      <button class="btn primary full">Send message →</button>
+    </form>
+
+  </div>
+</section>
+
+{% endblock %}

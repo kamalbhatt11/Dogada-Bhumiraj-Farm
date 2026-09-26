@@ -1,0 +1,207 @@
+{% extends "base.html" %}
+{% block title %}Checkout | Shree Dogada Farm{% endblock %}
+{% block content %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+<section class="inner-section checkout-section checkout-redesign"
+         id="checkout-section"
+         data-farm-lat="{{ farm_lat }}"
+         data-farm-lng="{{ farm_lng }}"
+         data-delivery-url="{{ url_for('main.calculate_delivery') }}">
+  <div class="checkout-heading">
+    <span class="eyebrow">SECURE CHECKOUT</span>
+    <h1>🛒 Checkout</h1>
+    <p>Complete your order and choose your payment method.</p>
+  </div>
+  <div class="checkout-layout">
+    <form id="checkout-form" class="premium-form form" method="post" action="{{ url_for('main.place_order') }}">
+      <h2 class="checkout-step"><span>1</span> Delivery Information</h2>
+      <div class="form-two">
+        <label>Full Name *<input name="customer_name" placeholder="Your full name" required autocomplete="name" /></label>
+        <label>Phone Number *<input name="phone" type="tel" placeholder="98XXXXXXXX" required autocomplete="tel" /></label>
+      </div>
+      <label>Email (Optional)<input type="email" name="email" placeholder="you@email.com" autocomplete="email" /></label>
+      <label>Full Address *<textarea name="address" placeholder="House No., Ward, City, Landmark..." required></textarea></label>
+
+      <div class="delivery-location-box" style="margin:18px 0;padding:16px;border:1px solid rgba(128,128,128,.35);border-radius:12px;min-width:0;">
+        <h3>📍 Choose Your Delivery Location *</h3>
+        <p>Use your current location, or click/tap your exact delivery point on the map. Location permission is optional.</p>
+        <button type="button" class="btn primary" id="get-location">📍 Use My Current Location</button>
+        <p id="location-status" role="status" aria-live="polite">No delivery location selected yet.</p>
+        <div id="delivery-map" style="height:300px;width:100%;max-width:100%;border-radius:10px;z-index:0;margin:12px 0;"></div>
+        <div id="distance-result" hidden>
+          <p>Road distance: <strong id="delivery-distance">—</strong></p>
+          <p>Delivery charge: <strong id="calculated-delivery-fee">—</strong></p>
+          <small>First kilometre free, then Rs. 30 per additional started kilometre.</small>
+        </div>
+        <input type="hidden" name="customer_lat" id="customer_lat" />
+        <input type="hidden" name="customer_lng" id="customer_lng" />
+      </div>
+
+      <div class="checkout-separator"></div>
+      <h2 class="checkout-step"><span>2</span> Payment Method</h2>
+      <p class="checkout-muted">Choose your preferred payment method.</p>
+      <div class="payment-options">
+        <label class="payment-choice"><input type="radio" name="payment_method" value="Cash on Delivery" /><span class="payment-symbol">💵</span><b>Cash on Delivery</b><small>Pay when you receive your order</small></label>
+        <label class="payment-choice"><input type="radio" name="payment_method" value="eSewa" checked /><span class="payment-symbol">🟢</span><b>eSewa</b><small>Scan QR and pay via eSewa</small></label>
+        <label class="payment-choice"><input type="radio" name="payment_method" value="Bank Transfer" /><span class="payment-symbol">🏦</span><b>Bank Transfer</b><small>Global IME Bank transfer</small></label>
+        <label class="payment-choice"><input type="radio" name="payment_method" value="Khalti" /><span class="payment-symbol">🟣</span><b>Khalti</b><small>Scan QR and pay via Khalti</small></label>
+      </div>
+      <div class="payment-details" id="payment-details">
+        <h3 id="payment-details-title">eSewa Payment</h3>
+        <p>Scan the QR code using your selected payment app.</p>
+        <div class="payment-details-grid">
+          <div class="payment-qr-hover" tabindex="0">
+            <img id="payment-qr" src="{{ url_for('static',filename='images/esewa.jpeg') }}"
+                 data-esewa="{{ url_for('static',filename='images/esewa.jpeg') }}"
+                 data-bank="{{ url_for('static',filename='images/global.jpeg') }}"
+                 data-khalti="{{ url_for('static',filename='images/khalti.jpeg') }}"
+                 alt="eSewa payment QR code" />
+          </div>
+          <div>
+            <b>After making the payment:</b>
+            <ol><li>Enter your transaction ID (optional).</li><li>Keep your payment confirmation.</li><li>Click Place Order.</li></ol>
+            <label>Transaction ID (Optional)<input name="notes" id="payment-reference" placeholder="Transaction ID / payment reference" /></label>
+          </div>
+        </div>
+      </div>
+      <input id="cart-json" type="hidden" name="cart_json" />
+    </form>
+    <aside class="premium-cart cart checkout-cart">
+      <div class="cart-top"><h2>🛒 Order Summary</h2></div>
+      <div id="checkout-lines" class="premium-cart-lines"></div>
+      <div class="total premium-total"><span>Subtotal</span><b id="checkout-subtotal">Rs. 0</b></div>
+      <div class="total"><span>Delivery Charge</span><b id="delivery-fee">Select location</b></div>
+      <div class="grand premium-grand"><span>Total</span><b id="checkout-total">Rs. 0</b></div>
+      <div class="checkout-safe"><b>🛡 Your Order is Safe</b><small>We use secure payment methods to keep your information protected.</small></div>
+      <button class="btn primary full" type="submit" form="checkout-form" id="place-order-button" disabled>🔒 Select Delivery Location First</button>
+    </aside>
+  </div>
+</section>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script>
+(function () {
+  // Read Flask values from HTML attributes, keeping Jinja out of JavaScript.
+  const checkoutSection = document.getElementById('checkout-section');
+  const FARM_LAT = Number(checkoutSection.dataset.farmLat);
+  const FARM_LNG = Number(checkoutSection.dataset.farmLng);
+  const deliveryUrl = checkoutSection.dataset.deliveryUrl;
+  const button = document.getElementById('get-location');
+  const status = document.getElementById('location-status');
+  const latInput = document.getElementById('customer_lat');
+  const lngInput = document.getElementById('customer_lng');
+  const result = document.getElementById('distance-result');
+  const distanceText = document.getElementById('delivery-distance');
+  const feeText = document.getElementById('calculated-delivery-fee');
+  const feeSummary = document.getElementById('delivery-fee');
+  const subtotalText = document.getElementById('checkout-subtotal');
+  const totalText = document.getElementById('checkout-total');
+  const submitButton = document.getElementById('place-order-button');
+  let fee = null;
+  let marker;
+  let requestNumber = 0;
+  if (typeof L === 'undefined') {
+    status.textContent = 'The delivery map could not load. Check your internet connection and refresh the page.';
+    button.disabled = true;
+    return;
+  }
+  const map = L.map('delivery-map').setView([FARM_LAT, FARM_LNG], 13);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '&copy; OpenStreetMap contributors'
+  }).addTo(map);
+  L.marker([FARM_LAT, FARM_LNG]).addTo(map).bindPopup('Shree Dogada Farm');
+
+  function numberFromText(text) {
+    const match = (text || '').replace(/,/g, '').match(/(?:Rs\.?\s*)?([0-9]+(?:\.[0-9]+)?)/i);
+    return match ? Number(match[1]) : 0;
+  }
+  function updateTotal() {
+    if (fee === null) return;
+    const subtotal = numberFromText(subtotalText.textContent);
+    totalText.textContent = 'Rs. ' + (subtotal + fee).toLocaleString('en-IN', {maximumFractionDigits: 2});
+    feeSummary.textContent = 'Rs. ' + fee;
+  }
+  // The existing base.html cart script may render the subtotal after this script.
+  // Watch that value and keep the displayed grand total synchronized.
+  new MutationObserver(updateTotal).observe(subtotalText, {childList: true, characterData: true, subtree: true});
+
+  async function selectLocation(lat, lng) {
+    const seq = ++requestNumber;
+    fee = null;
+    latInput.value = '';
+    lngInput.value = '';
+    result.hidden = true;
+    feeSummary.textContent = 'Calculating...';
+    submitButton.disabled = true;
+    submitButton.textContent = '🔒 Calculating Delivery...';
+    status.textContent = 'Calculating driving distance...';
+    if (marker) map.removeLayer(marker);
+    marker = L.marker([lat, lng]).addTo(map).bindPopup('Your delivery location').openPopup();
+    map.fitBounds([[FARM_LAT, FARM_LNG], [lat, lng]], {padding: [35, 35], maxZoom: 15});
+    try {
+      const response = await fetch(deliveryUrl + '?lat=' + encodeURIComponent(lat) + '&lng=' + encodeURIComponent(lng));
+      const data = await response.json();
+      if (seq !== requestNumber) return;
+      if (!response.ok || !data.success) throw new Error(data.error || 'Could not calculate distance.');
+      fee = Number(data.fee);
+      latInput.value = lat.toFixed(7);
+      lngInput.value = lng.toFixed(7);
+      distanceText.textContent = Number(data.distance_km).toFixed(2) + ' km';
+      feeText.textContent = 'Rs. ' + fee;
+      feeSummary.textContent = 'Rs. ' + fee;
+      result.hidden = false;
+      status.textContent = 'Location selected. You can tap the map to change it.';
+      submitButton.disabled = false;
+      submitButton.textContent = '🔒 Place Order';
+      updateTotal();
+    } catch (error) {
+      if (seq !== requestNumber) return;
+      feeSummary.textContent = 'Unavailable';
+      status.textContent = error.message || 'Could not calculate driving distance.';
+      submitButton.disabled = true;
+      submitButton.textContent = '🔒 Select Delivery Location First';
+    }
+  }
+
+  map.on('click', event => selectLocation(event.latlng.lat, event.latlng.lng));
+  button.addEventListener('click', function () {
+    if (!navigator.geolocation) {
+      status.textContent = 'Your browser does not support location access. Tap your delivery point on the map.';
+      return;
+    }
+    status.textContent = 'Please allow location access, or tap the map instead.';
+    navigator.geolocation.getCurrentPosition(
+      pos => selectLocation(pos.coords.latitude, pos.coords.longitude),
+      () => { status.textContent = 'Location unavailable or permission denied. Tap your delivery point on the map.'; },
+      {enableHighAccuracy: true, timeout: 15000, maximumAge: 30000}
+    );
+  });
+  document.getElementById('checkout-form').addEventListener('submit', function (event) {
+    if (fee === null || !latInput.value || !lngInput.value) {
+      event.preventDefault();
+      status.textContent = 'Select your delivery location before placing the order.';
+    }
+  });
+  // Payment switching is also handled by some versions of base.html.
+  // This handler uses the same existing IDs and does not change the cart code.
+  const qr = document.getElementById('payment-qr');
+  const paymentTitle = document.getElementById('payment-details-title');
+  const paymentDetails = document.getElementById('payment-details');
+  const paymentSources = {eSewa: qr.dataset.esewa, 'Bank Transfer': qr.dataset.bank, Khalti: qr.dataset.khalti};
+  function showPayment(method) {
+    if (method === 'Cash on Delivery') {
+      paymentDetails.style.display = 'none';
+    } else {
+      paymentDetails.style.display = '';
+      qr.src = paymentSources[method] || qr.dataset.esewa;
+      qr.alt = method + ' payment QR code';
+      paymentTitle.textContent = method + ' Payment';
+    }
+  }
+  document.querySelectorAll('input[name="payment_method"]').forEach(input => {
+    input.addEventListener('change', () => { if (input.checked) showPayment(input.value); });
+  });
+  showPayment(document.querySelector('input[name="payment_method"]:checked').value);
+})();
+</script>
+{% endblock %}

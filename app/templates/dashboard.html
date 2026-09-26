@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Owner Dashboard | Shree Dogada Farm{% endblock %}
+{% block content %}
+<style>
+/* Scoped owner dashboard tabs: no changes to the public website */
+.owner-tabs{max-width:1320px;margin:36px auto 75px;padding:0 22px;color:#eaf3fa}
+.owner-tabs input[name="owner-tab"]{position:absolute;opacity:0;width:1px;height:1px}
+.owner-layout{display:grid;grid-template-columns:235px minmax(0,1fr);gap:24px;align-items:start}
+.owner-menu,.owner-main{background:linear-gradient(145deg,#1c3045,#111e30);border:1px solid #3b5267;border-radius:20px;box-shadow:0 18px 45px #0003}
+.owner-menu{padding:18px;position:sticky;top:100px;display:flex;flex-direction:column;gap:7px}
+.owner-menu .menu-title{color:#9db4c8;font-size:.8rem;font-weight:800;letter-spacing:.14em;padding:9px 12px}
+.owner-menu label{display:block;cursor:pointer;padding:13px 15px;border-radius:11px;color:#d6e5f0;font-weight:700;transition:.2s}
+.owner-menu label:hover{background:#2a4056;color:white}
+#tab-overview:checked~.owner-layout label[for="tab-overview"],#tab-orders:checked~.owner-layout label[for="tab-orders"],#tab-livestock:checked~.owner-layout label[for="tab-livestock"],#tab-products:checked~.owner-layout label[for="tab-products"],#tab-inquiries:checked~.owner-layout label[for="tab-inquiries"],#tab-security:checked~.owner-layout label[for="tab-security"]{background:#10b981;color:#082c28}
+.owner-main{padding:28px;min-height:480px}
+.owner-view{display:none}
+#tab-overview:checked~.owner-layout #view-overview,#tab-orders:checked~.owner-layout #view-orders,#tab-livestock:checked~.owner-layout #view-livestock,#tab-products:checked~.owner-layout #view-products,#tab-inquiries:checked~.owner-layout #view-inquiries,#tab-security:checked~.owner-layout #view-security{display:block}
+.owner-view h2,.owner-view h3{color:#f5f9fc}.owner-view p,.owner-view small{color:#bfd0de}.owner-view .eyebrow{color:#6ce0ba}
+.owner-view .stats{margin:22px 0;display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:14px}
+.owner-view .stats>div{background:#263a50;border:1px solid #43576e;border-radius:14px;padding:19px;display:flex;flex-direction:column;gap:8px}
+.owner-view .stats span,.owner-view .stats small{color:#b8c9d9}.owner-view .stats b{font-size:1.6rem;color:#fff}
+.owner-view .admin-card,.owner-view .admin-edit,.owner-view .premium-form{background:#263a50;color:#eaf3fa;border:1px solid #43576e;border-radius:14px;padding:18px}
+.owner-view input:not([type=checkbox]),.owner-view select,.owner-view textarea{background:#172b40;color:white;border:1px solid #5a7187;border-radius:8px;padding:10px;max-width:100%}
+.owner-view label{color:#d8e7f2}.owner-view .admin-product-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:15px}
+.owner-view .admin-list{display:grid;gap:14px}.owner-view .admin-card{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.owner-view .admin-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:20px}
+.owner-view .btn.primary{background:#10b981;color:#082c28;border-color:#10b981}
+.owner-top{max-width:1320px;margin:35px auto 0;padding:0 22px;display:flex;justify-content:space-between;align-items:center;gap:16px}
+.owner-top h1{color:#fff;margin:7px 0}.owner-top p{color:#bed2e2}
+@media(max-width:760px){.owner-layout{grid-template-columns:1fr}.owner-menu{position:static;flex-direction:row;flex-wrap:wrap;gap:5px}.owner-menu .menu-title{width:100%}.owner-menu label{padding:9px 12px}.owner-main{padding:18px}.owner-top{align-items:start}}
+</style>
+<div class="owner-top"><div><span class="eyebrow">OWNER DASHBOARD</span><h1>Farm control center.</h1><p>Choose a section to manage your farm.</p></div><a class="btn light" href="/owner/logout">Log out</a></div>
+<div class="owner-tabs">
+<input type="radio" name="owner-tab" id="tab-overview" checked>
+<input type="radio" name="owner-tab" id="tab-orders">
+<input type="radio" name="owner-tab" id="tab-livestock">
+<input type="radio" name="owner-tab" id="tab-products">
+<input type="radio" name="owner-tab" id="tab-inquiries">
+<input type="radio" name="owner-tab" id="tab-security">
+<div class="owner-layout">
+<nav class="owner-menu" aria-label="Owner dashboard sections"><div class="menu-title">MANAGEMENT</div><label for="tab-overview">▦ Overview</label><label for="tab-orders">▤ Orders</label><label for="tab-livestock">♧ Livestock</label><label for="tab-products">▣ Products</label><label for="tab-inquiries">✉ Inquiries</label><label for="tab-security">⚙ Security</label></nav>
+<main class="owner-main">
+<section class="owner-view" id="view-overview"><span class="eyebrow">OVERVIEW</span><h2>Farm at a glance</h2><div class="stats"><div><span>Total orders</span><b>{{ orders|length }}</b></div><div><span>Pending orders</span><b>{{ pending }}</b></div><div><span>Delivered sales</span><b>Rs. {{ "{:,.0f}".format(sales) }}</b></div><div><span>Products</span><b>{{ products|length }}</b></div><div><span>Livestock</span><b>{{ animals|length }}</b></div><div><span>Vaccinations due</span><b>{{ upcoming|length }}</b></div></div><p>Select Orders, Livestock or another section from the menu to manage it.</p></section>
+<section class="owner-view" id="view-orders"><div class="admin-heading"><div><span class="eyebrow">ORDERS</span><h2>Customer orders</h2><p>Customer purchases and delivery management.</p></div><a class="btn primary" href="{{ url_for('admin.orders') }}">View all orders →</a></div><div class="stats"><div><span>Total orders</span><b>{{ orders|length }}</b></div><div><span>Pending</span><b>{{ pending }}</b></div><div><span>Delivered sales</span><b>Rs. {{ "{:,.0f}".format(sales) }}</b></div></div><p>Click <strong>View all orders</strong> to see customer details, ordered items, amounts and status filters on the dedicated Orders page.</p></section>
+<section class="owner-view" id="view-livestock"><div class="admin-heading"><div><span class="eyebrow">LIVESTOCK</span><h2>Animal management</h2></div><a class="btn primary" href="{{ url_for('admin.animals') }}">Manage animals →</a></div><div class="stats"><div><span>Cows</span><b>{{ animals|selectattr('animal_type','equalto','Cow')|list|length }}</b></div><div><span>Buffaloes</span><b>{{ animals|selectattr('animal_type','equalto','Buffalo')|list|length }}</b></div><div><span>Calves</span><b>{{ animals|selectattr('animal_type','equalto','Calf')|list|length }}</b></div><div><span>Vaccinations due</span><b>{{ upcoming|length }}</b></div></div>{% if upcoming %}<h3>Vaccination reminders</h3><div class="admin-list">{% for v in upcoming %}<article class="admin-card"><div><strong>{{ v.animal.animal_id }} · {{ v.vaccine_name }}</strong><p>Next due: {{ v.next_due }}</p></div><a class="btn primary" href="{{ url_for('admin.edit_animal', id=v.animal_id) }}#vaccinations">View record</a></article>{% endfor %}</div>{% endif %}</section>
+<section class="owner-view" id="view-products"><span class="eyebrow">CATALOGUE</span><h2>Product management</h2><div class="admin-product-grid">{% for p in products %}<form class="admin-edit" method="post" action="/owner/product/{{p.id}}/save"><div class="edit-title"><b>{{p.icon}} {{p.name}}</b><span>{{p.category}}</span></div><label>Price<input name="price" value="{{p.price if p.price is not none else ''}}"></label><label>Unit<input name="unit" value="{{p.unit}}"></label><label class="check"><input type="checkbox" name="active" {% if p.active %}checked{% endif %}> Visible</label><button class="btn primary small-btn">Save changes</button></form>{% endfor %}</div></section>
+<section class="owner-view" id="view-inquiries"><span class="eyebrow">CUSTOMERS</span><h2>Inquiries</h2><div class="admin-list">{% for x in inquiries %}<article class="admin-card"><div><div class="admin-title"><h3>{{x.name}}</h3><span class="status">{{x.status}}</span></div><p>{{x.message}}</p><small>{{x.phone}} · {{x.email}}</small></div><form method="post" action="/owner/inquiry/{{x.id}}/status"><select name="status" onchange="this.form.submit()"><option {% if x.status=="New" %}selected{% endif %}>New</option><option {% if x.status=="Contacted" %}selected{% endif %}>Contacted</option><option {% if x.status=="Closed" %}selected{% endif %}>Closed</option></select></form></article>{% else %}<div class="empty-state"><h3>No inquiries yet</h3><p>Customer messages will appear here.</p></div>{% endfor %}</div></section>
+<section class="owner-view" id="view-security"><span class="eyebrow">SECURITY</span><h2>Change password</h2><form class="premium-form form narrow" method="post" action="/owner/change-password"><label>Current password<input type="password" name="old_password" required></label><label>New password<input type="password" name="new_password" minlength="10" required></label><button class="btn primary">Update password</button></form></section>
+</main></div></div>
+{% endblock %}

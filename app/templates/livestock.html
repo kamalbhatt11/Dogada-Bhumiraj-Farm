@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Available Cows, Buffaloes & Calves | Shree Dogada Farm{% endblock %}
+{% block content %}
+<section class="inner-hero livestock-hero"><div class="inner-hero-content"><span class="eyebrow">OUR LIVESTOCK</span><h1>Healthy animals, <em>raised with care.</em></h1><p>Browse currently available animals and contact our farm to buy.</p></div></section>
+<section class="inner-section"><div class="section-heading"><span class="eyebrow">AVAILABLE LIVESTOCK</span><h2>Meet our animals</h2></div>
+{% for kind in ['Cow','Buffalo','Calf'] %}
+<h2 class="animal-category">Available {{ 'Cows' if kind == 'Cow' else 'Buffaloes' if kind == 'Buffalo' else 'Calves' }}</h2>
+<div class="animal-grid">{% for animal in animals if animal.animal_type == kind %}
+<article class="animal-card">{% if animal.photo %}<img class="animal-photo" src="{{ url_for('main.animal_photo', filename=animal.photo) }}" alt="{{ animal.breed }} {{ animal.animal_type }}">{% else %}<div class="animal-photo animal-placeholder">{{ '🐄' if kind == 'Cow' else '🐃' if kind == 'Buffalo' else '🐮' }}</div>{% endif %}
+<div class="animal-details"><h3>{{ kind }} #{{ animal.animal_id }}</h3><p>{{ animal.breed }} • {{ animal.gender }} • {{ '%g'|format(animal.age_years) }} years</p><p>{{ animal.health_status }}{% if animal.milk_liters is not none %} • {{ '%g'|format(animal.milk_liters) }} L/day{% endif %}</p><strong>{% if animal.price is not none %}Rs. {{ '{:,.0f}'.format(animal.price) }}{% else %}Contact for price{% endif %}</strong><a class="btn primary" href="{{ url_for('main.contact') }}?animal={{ animal.animal_id|urlencode }}">Contact to Buy</a></div></article>
+{% else %}<p>No {{ kind.lower() }}s listed as available right now.</p>{% endfor %}</div>
+{% endfor %}</section>
+{% endblock %}

@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+
+{% block title %}Our Farm | Shree Dogada Bhumiraj Farm in Dhangadhi{% endblock %}
+
+{% block meta_description %}
+<meta name="description"
+      content="Learn about Shree Dogada Bhumiraj Pashupanchhi Farm in Dhangadhi-13, Sudurpashchim, Nepal. Discover our 10 years of trust, healthy livestock, fresh dairy products and local farm values.">
+{% endblock %}
+
+{% block content %}
+<section class="inner-hero">
+  <div class="inner-orb orb-a"></div>
+  <div class="inner-orb orb-b"></div>
+  <div class="inner-hero-content">
+    <span class="eyebrow">OUR FARM</span>
+    <h1>Built on care, quality and <em>10 years of trust.</em></h1>
+    <p>
+      Shree Dogada Bhumiraj Pashupanchhi Farm serves Dhangadhi and the
+      surrounding community with fresh dairy and healthy livestock.
+    </p>
+    <div class="hero-mini-stats">
+      <span><b>10+</b> Years of trust</span> <span><b>100%</b> Local care</span>
+      <span><b>Fresh</b> Every day</span>
+    </div>
+  </div>
+</section>
+<section class="inner-section">
+  <div class="section-heading">
+    <span class="eyebrow">WHAT WE BELIEVE</span>
+    <h2>Good products start with good care.</h2>
+    <p>
+      Our work is centered around healthy animals, responsible dairy handling
+      and dependable service.
+    </p>
+  </div>
+  <div class="about-grid">
+    <article class="feature-card">
+      <div class="feature-icon">🐄</div>
+      <h3>Healthy Livestock</h3>
+      <p>
+        We focus on the care and wellbeing of our cows, buffaloes and calves.
+      </p>
+    </article>
+    <article class="feature-card">
+      <div class="feature-icon">🥛</div>
+      <h3>Fresh Dairy</h3>
+      <p>
+        Fresh dairy products prepared with attention to quality and cleanliness.
+      </p>
+    </article>
+    <article class="feature-card">
+      <div class="feature-icon">🌿</div>
+      <h3>Local & Honest</h3>
+      <p>
+        A local farm serving local families with straightforward communication.
+      </p>
+    </article>
+  </div>
+</section>
+<section class="inner-section story-panel about-care-section">
+  <div class="about-care-image">
+    <img
+  src="{{ url_for('static', filename='images/farmprofilepic.png') }}"
+  alt="Shree Dogada Bhumiraj Pashupanchhi Farm in Dhangadhi Nepal"
+/>
+  </div>
+  <div class="about-care-content">
+    <span class="eyebrow">SHREE DOGADA</span>
+    <h2>From our farm to your family.</h2>
+    <p>
+      We are proud to operate in Dhangadhi and to keep improving the way we care
+      for animals, handle dairy and serve our customers.
+    </p>
+    <div class="farm-location">
+      <span>📍</span>
+      <div>
+        <strong>Our Location</strong>
+        <p>Dhangadhi-13, Sudurpashchim Pradesh, Nepal</p>
+        <a href="#" target="_blank" class="location-link">View Location →</a>
+      </div>
+    </div>
+    ```html
+<div class="farm-social">
+    <strong>Follow Our Farm</strong>
+
+    <div class="social-links">
+        <a href="https://www.facebook.com/profile.php?id=61587328230146&mibextid=ZbWKwL"
+           target="_blank"
+           rel="noopener noreferrer">
+            Facebook
+        </a>
+
+        <a href="https://www.tiktok.com/@shree.dogada.bhum?_r=1&_t=ZS-9A1NLte4tWu"
+           target="_blank"
+           rel="noopener noreferrer">
+            TikTok
+        </a>
+
+        <a href="https://youtube.com/@manjubhatt-f7z?si=MmjctXOIeL7zkVvK"
+           target="_blank"
+           rel="noopener noreferrer">
+            YouTube
+        </a>
+    </div>
+</div>
+```
+
+    <a class="btn primary" href="/contact">Talk to the Farm →</a>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Customer Orders | Shree Dogada Farm{% endblock %}
+{% block content %}
+<section class="dashboard-hero"><div><span class="eyebrow">OWNER / ORDERS</span><h1>Customer orders</h1><p>All customer purchases, delivery details and order statuses in one place.</p></div><a class="btn light" href="{{ url_for('admin.dashboard') }}">← Dashboard</a></section>
+<section class="inner-section dashboard-section orders-only">
+ <div class="stats premium-stats order-stats">
+ {% for key, label in [('All','Total orders'),('New','New'),('Preparing','Preparing'),('Delivered','Delivered')] %}<div><span>{{ label }}</span><b>{{ counts[key] }}</b></div>{% endfor %}
+ </div>
+ <div class="order-filters" aria-label="Filter orders">
+ {% for status in statuses %}<a class="order-filter {% if selected == status %}active{% endif %}" href="{{ url_for('admin.orders',status=status) }}">{{ status }} <span>{{ counts[status] }}</span></a>{% endfor %}
+ </div>
+ <div class="admin-list">
+ {% for o in orders %}
+ <article class="admin-card order-card">
+  <div class="order-details">
+   <div class="admin-title"><h3>{{ o.order_code }}</h3><span class="status">{{ o.status }}</span></div>
+   <p class="order-date">{{ o.created_at.strftime('%d %b %Y, %I:%M %p') if o.created_at else '' }}</p>
+   <p><strong>{{ o.customer_name }}</strong> · <a href="tel:{{ o.phone }}">{{ o.phone }}</a>{% if o.email %} · {{ o.email }}{% endif %}</p>
+   <p><strong>Delivery:</strong> {{ o.area }} · {{ o.address }}</p>
+   <div class="pill-row">{% for item in o.items_json|fromjson %}<span class="pill">{{ item.name }} × {{ item.qty }} · Rs. {{ '{:,.0f}'.format(item.line) }}</span>{% endfor %}</div>
+   {% if o.notes %}<p><strong>Notes:</strong> {{ o.notes }}</p>{% endif %}
+   <p><strong>Payment:</strong> {{ o.payment_method }}</p>
+  </div>
+  <div class="admin-side"><b>Rs. {{ '{:,.0f}'.format(o.total) }}</b><small>Subtotal Rs. {{ '{:,.0f}'.format(o.subtotal) }}<br>Delivery Rs. {{ '{:,.0f}'.format(o.delivery_charge or 0) }}</small>
+   <form method="post" action="{{ url_for('admin.order_status',id=o.id) }}"><input type="hidden" name="filter_status" value="{{ selected }}"><label for="status-{{ o.id }}">Order status</label><select id="status-{{ o.id }}" name="status" onchange="this.form.submit()">{% for status in statuses if status != 'All' %}<option value="{{ status }}" {% if o.status == status %}selected{% endif %}>{{ status }}</option>{% endfor %}</select><noscript><button class="btn primary small-btn" type="submit">Save status</button></noscript></form>
+  </div>
+ </article>
+ {% else %}<div class="empty-state"><h3>No {{ selected|lower if selected != 'All' else '' }} orders found</h3><p>Orders will appear here when customers place them.</p></div>{% endfor %}
+ </div>
+</section>
+{% endblock %}

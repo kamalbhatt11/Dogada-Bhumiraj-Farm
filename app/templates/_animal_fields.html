@@ -1,0 +1,14 @@
+<div class="animal-form-grid">
+<label>Animal ID <input name="animal_id" value="{{ animal.animal_id if animal else '' }}" placeholder="COW-001" maxlength="40" required></label>
+<label>Type <select name="animal_type" required>{% for t in ['Cow','Buffalo','Calf'] %}<option value="{{t}}" {% if animal and animal.animal_type==t %}selected{% endif %}>{{t}}</option>{% endfor %}</select></label>
+<label>Breed <input name="breed" value="{{ animal.breed if animal else '' }}" maxlength="100" required></label>
+<label>Gender <select name="gender"><option value="Female" {% if animal and animal.gender=='Female' %}selected{% endif %}>Female</option><option value="Male" {% if animal and animal.gender=='Male' %}selected{% endif %}>Male</option></select></label>
+<label>Age in years <input name="age_years" type="number" step="0.1" min="0" max="80" value="{{ animal.age_years if animal else 0 }}" required></label>
+<label>Color <input name="color" value="{{ animal.color if animal else '' }}" maxlength="80"></label>
+<label>Health status <input name="health_status" value="{{ animal.health_status if animal else 'Healthy' }}" maxlength="120"></label>
+<label>Milk (L/day, optional) <input name="milk_liters" type="number" min="0" step="0.1" value="{{ animal.milk_liters if animal and animal.milk_liters is not none else '' }}"></label>
+<label>Price (Rs., optional) <input name="price" type="number" min="0" step="1" value="{{ animal.price if animal and animal.price is not none else '' }}"></label>
+<label>Status <select name="status">{% for t in ['Available','Reserved','Sold','Not Available'] %}<option {% if animal and animal.status==t %}selected{% endif %}>{{t}}</option>{% endfor %}</select></label>
+<label>Photo (JPG/PNG/WebP, max 5MB) <input name="photo" type="file" accept="image/jpeg,image/png,image/webp"></label>
+<label class="wide">Description <textarea name="description" rows="3">{{ animal.description if animal else '' }}</textarea></label>
+</div>

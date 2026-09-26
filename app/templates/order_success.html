@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Order Received | Shree Dogada Farm{% endblock %}
+{% block content %}
+<section class="success-page">
+    <div class="success-card">
+        <div class="success-check">✓</div><span class="eyebrow">ORDER RECEIVED</span>
+        <h1>Thank you, {{ order.customer_name }}.</h1><p>Your order has been saved successfully.</p>
+        <div class="order-code"><small>ORDER ID</small><b>{{ order.order_code }}</b></div>
+        <div class="success-total">Rs. {{ "{:,.0f}".format(order.total) }}</div>
+        <p>We'll contact you at <b>{{ order.phone }}</b> to confirm it.</p>
+        <div class="success-actions"><a class="btn whatsapp" href="https://wa.me/9779766968659?text=Hello%20Shree%20Dogada%20Farm%2C%20my%20order%20ID%20is%20{{order.order_code}}" target="_blank">WhatsApp the farm</a><a class="btn ghost" href="/products">Shop again</a></div>
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}Fresh Milk & Dairy Products in Dhangadhi | Shree Dogada Farm{% endblock %}
+
+{% block meta_description %}
+<meta name="description"
+      content="Buy fresh cow milk, buffalo milk, dahi, mahi, paneer and pure ghee from Shree Dogada Bhumiraj Pashupanchhi Farm in Dhangadhi-13, Sudurpashchim, Nepal.">
+{% endblock %}
+
+{% block content %}
+<section class="inner-hero shop-hero">
+    <div class="inner-orb orb-a"></div><div class="inner-orb orb-b"></div>
+    <div class="inner-hero-content">
+        <span class="eyebrow">ONLINE SHOP</span>
+        <h1>Fresh from the farm, <em>ready for you.</em></h1>
+        <p>Choose your dairy products, set the quantity and add them to your order.</p>
+    </div>
+</section>
+<section class="inner-section">
+    <div class="shop-layout">
+        <div class="shop-products">
+            <div class="section-heading compact"><span class="eyebrow">FRESH DAIRY</span><h2>Farm favourites</h2><p>Simple, fresh and locally prepared.</p></div>
+            <div class="premium-product-grid">
+            {% for p in products if p.category=="Dairy" %}
+                <article class="premium-product">
+                    <div class="product-icon">{{ p.icon }}</div>
+                    <span class="product-tag">FRESH DAIRY</span>
+                    <h3>{{ p.name }}</h3>
+                    <p>{{ p.description }}</p>
+                    <div class="product-price"><b>Rs. {{ "{:,.0f}".format(p.price) }}</b><span>/ {{ p.unit }}</span></div>
+                    <div class="qty-row">
+                        <button class="qty-btn minus" data-id="{{ p.id }}">−</button>
+                        <strong id="qty-{{ p.id }}">0</strong>
+                        <button class="qty-btn plus" data-id="{{ p.id }}">+</button>
+                        <button class="cart-add premium-add add" data-id="{{ p.id }}" data-name="{{ p.name }}" data-price="{{ p.price }}" data-unit="{{ p.unit }}">Add to cart</button>
+                    </div>
+                </article>
+            {% endfor %}
+            </div>
+        </div>
+        <aside class="premium-cart cart">
+            <div class="cart-top"><span class="eyebrow">YOUR CART</span><span class="cart-badge">🛒</span></div>
+            <h2>Order summary</h2>
+            <div id="cart-lines" class="premium-cart-lines"></div>
+            <div class="total premium-total"><span>Subtotal</span><b id="cart-subtotal">Rs. 0</b></div>
+            <a class="btn primary full" href="/checkout">Continue to checkout →</a>
+        </aside>
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta name="google-site-verification" content="gsmDZoUrN61Y9heGy44UZyXWRF7bdHSSFxi5lOVXLSc">
+
+    <title>{% block title %}Shree Dogada Bhumiraj Pashupanchhi Farm | Dhangadhi, Nepal{% endblock %}</title>
+
+{% block meta_description %}
+<meta name="description"
+      content="Shree Dogada Bhumiraj Pashupanchhi Farm in Dhangadhi-13, Sudurpashchim, Nepal. Fresh cow milk, buffalo milk, dahi, mahi, paneer, ghee and healthy livestock. 10 Years of Trust.">
+{% endblock %}
+
+<meta name="keywords"
+      content="Shree Dogada Farm, Shree Dogada Bhumiraj Pashupanchhi Farm, dairy farm Dhangadhi, milk Dhangadhi, fresh milk Nepal, buffalo milk Dhangadhi, cow milk Dhangadhi, dairy products Nepal, livestock farm Dhangadhi">
+    <meta name="author" content="Shree Dogada Bhumiraj Pashupanchhi Farm">
+
+    <meta name="robots" content="index, follow">
+
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Shree Dogada Bhumiraj Pashupanchhi Farm | Dhangadhi, Nepal">
+    <meta property="og:description" content="Fresh dairy products and healthy livestock from Shree Dogada Farm in Dhangadhi-13, Sudurpashchim, Nepal.">
+    <meta property="og:site_name" content="Shree Dogada Bhumiraj Pashupanchhi Farm">
+
+    <link rel="canonical" href="https://shreedogadabhumiraj.onrender.com{{ request.path }}">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+    <script defer src="{{ url_for('static', filename='js/app.js') }}"></script>
+</head>
+
+<body class="inner-page">
+
+<header class="inner-header">
+    <div class="inner-nav-wrap">
+
+        <a class="inner-brand" href="/">
+            <span class="inner-logo">
+                <img src="{{ url_for('static', filename='images/logofarm.png') }}" alt="Shree Dogada Farm">
+            </span>
+            <span>
+                <strong>Shree Dogada Farm</strong>
+                <small>Pure • Natural • Healthy</small>
+            </span>
+        </a>
+
+        <button class="inner-menu-btn" type="button" aria-label="Open menu">☰</button>
+
+        <nav class="inner-nav">
+            <a href="/">Home</a>
+            <a href="/products">Shop</a>
+            <a href="/livestock">Livestock</a>
+            <a href="/about">Farm</a>
+            <a href="/contact">Contact</a>
+            <a href="/owner/login">Owner</a>
+            <a class="inner-cart-link" href="/checkout">🛒 <i id="cart-count">0</i></a>
+        </nav>
+
+    </div>
+</header>
+
+{% with ms=get_flashed_messages(with_categories=true) %}
+    {% for c,m in ms %}
+        <div class="inner-flash {{ c }}">{{ m }}</div>
+    {% endfor %}
+{% endwith %}
+
+<main>
+    {% block content %}{% endblock %}
+</main>
+
+<footer class="inner-footer">
+
+    <div class="inner-footer-glow"></div>
+
+    <div class="inner-footer-grid">
+
+        <div>
+            <a class="inner-brand footer-brand" href="/">
+                <span class="inner-logo">
+                    <img src="{{ url_for('static', filename='images/logofarm.png') }}" alt="Shree Dogada Farm">
+                </span>
+                <span>
+                    <strong>Shree Dogada Farm</strong>
+                    <small>Pure • Natural • Healthy</small>
+                </span>
+            </a>
+
+            <p class="footer-copy">
+                Fresh dairy, healthy livestock and honest local service from Dhangadhi.
+            </p>
+        </div>
+
+        <div>
+            <h4>Explore</h4>
+            <a href="/">Home</a>
+            <a href="/products">Shop</a>
+            <a href="/livestock">Livestock</a>
+            <a href="/about">Our Farm</a>
+        </div>
+
+        <div>
+            <h4>Contact</h4>
+            <span>Dhangadhi-13, Sudurpaschim, Nepal</span>
+            <a href="tel:9766968659">9766968659</a>
+            <a href="tel:9848751916">9848751916</a>
+            <a href="mailto:bhattakamal780@gmail.com">bhattakamal780@gmail.com</a>
+        </div>
+
+        <div>
+            <h4>Follow Us</h4>
+
+            <a href="https://www.facebook.com/profile.php?id=61587328230146&mibextid=ZbWKwL"
+               target="_blank"
+               rel="noopener noreferrer">
+                Facebook
+            </a>
+
+            <a href="https://www.tiktok.com/@shree.dogada.bhum?_r=1&_t=ZS-9A1NLte4tWu"
+               target="_blank"
+               rel="noopener noreferrer">
+                TikTok
+            </a>
+
+            <a href="https://youtube.com/@manjubhatt-f7z?si=MmjctXOIeL7zkVvK"
+               target="_blank"
+               rel="noopener noreferrer">
+                YouTube
+            </a>
+        </div>
+
+    </div>
+
+    <div class="inner-footer-bottom">
+        <span>© 2026 Shree Dogada Bhumiraj Pashupanchhi Farm</span>
+        <span>10 Years of Trust</span>
+    </div>
+
+</footer>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const btn = document.querySelector(".inner-menu-btn");
+    const nav = document.querySelector(".inner-nav");
+    btn?.addEventListener("click", () => nav?.classList.toggle("open"));
+});
+</script>
+
+</body>
+</html>
