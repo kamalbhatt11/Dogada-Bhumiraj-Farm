@@ -11,8 +11,7 @@ python run.py
 
 Open http://127.0.0.1:5000
 Owner: http://127.0.0.1:5000/owner/login
-Username: owner
-Password: ChangeMe123!
+
 
 Change the owner password after first login.
 
