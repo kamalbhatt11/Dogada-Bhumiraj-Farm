@@ -30,11 +30,34 @@ def seed():
         ("Buffalo","buffalo",None,"on request","Livestock","Buffalo available based on current stock.","🐃"),
         ("Calf","calf",None,"on request","Livestock","Calves available based on current stock.","🐮")]
         db.session.add_all([Product(name=a,slug=b,price=c,unit=d,category=e,description=f,icon=g) for a,b,c,d,e,f,g in data]); db.session.commit()
-    if not Admin.query.first():
-        password = os.environ.get('INITIAL_OWNER_PASSWORD')
+       owner = Admin.query.filter_by(username="owner").first()
+
+    # Create owner account on first deployment
+    if not owner:
+        password = os.environ.get("INITIAL_OWNER_PASSWORD")
         if password and len(password) >= 10:
-            db.session.add(Admin(username="owner",password_hash=generate_password_hash(password)))
+            db.session.add(
+                Admin(
+                    username="owner",
+                    password_hash=generate_password_hash(password)
+                )
+            )
             db.session.commit()
         else:
             app_logger = __import__('logging').getLogger(__name__)
-            app_logger.warning('No owner account created. Set INITIAL_OWNER_PASSWORD (at least 10 characters) before first deployment.')
+            app_logger.warning(
+                'No owner account created. Set INITIAL_OWNER_PASSWORD '
+                '(at least 10 characters) before first deployment.'
+            )
+
+    # Temporary password reset for an existing owner
+    reset_password = os.environ.get("RESET_OWNER_PASSWORD")
+
+    if reset_password and len(reset_password) >= 10:
+        owner = Admin.query.filter_by(username="owner").first()
+
+        if owner:
+            owner.password_hash = generate_password_hash(reset_password)
+            db.session.commit()
+            app_logger = __import__('logging').getLogger(__name__)
+            app_logger.warning("Owner password has been reset using RESET_OWNER_PASSWORD.")
