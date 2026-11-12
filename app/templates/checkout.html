@@ -14,6 +14,7 @@
   </div>
   <div class="checkout-layout">
     <form id="checkout-form" class="premium-form form" method="post" action="{{ url_for('main.place_order') }}">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <h2 class="checkout-step"><span>1</span> Delivery Information</h2>
       <div class="form-two">
         <label>Full Name *<input name="customer_name" placeholder="Your full name" required autocomplete="name" /></label>
@@ -24,7 +25,7 @@
 
       <div class="delivery-location-box" style="margin:18px 0;padding:16px;border:1px solid rgba(128,128,128,.35);border-radius:12px;min-width:0;">
         <h3>📍 Choose Your Delivery Location *</h3>
-        <p>Use your current location, or click/tap your exact delivery point on the map. Location permission is optional.</p>
+        <p>Use your current location, or click/tap your exact delivery point on the map. Location permission is optional. The map and road-distance estimate use OpenStreetMap data and a public routing service; your chosen coordinates are sent to the routing service to calculate delivery fees.</p>
         <button type="button" class="btn primary" id="get-location">📍 Use My Current Location</button>
         <p id="location-status" role="status" aria-live="polite">No delivery location selected yet.</p>
         <div id="delivery-map" style="height:300px;width:100%;max-width:100%;border-radius:10px;z-index:0;margin:12px 0;"></div>
@@ -41,21 +42,20 @@
       <h2 class="checkout-step"><span>2</span> Payment Method</h2>
       <p class="checkout-muted">Choose your preferred payment method.</p>
       <div class="payment-options">
-        <label class="payment-choice"><input type="radio" name="payment_method" value="Cash on Delivery" /><span class="payment-symbol">💵</span><b>Cash on Delivery</b><small>Pay when you receive your order</small></label>
-        <label class="payment-choice"><input type="radio" name="payment_method" value="eSewa" checked /><span class="payment-symbol">🟢</span><b>eSewa</b><small>Scan QR and pay via eSewa</small></label>
+        <label class="payment-choice"><input type="radio" name="payment_method" value="Cash on Delivery" checked /><span class="payment-symbol">💵</span><b>Cash on Delivery</b><small>Pay when you receive your order</small></label>
         <label class="payment-choice"><input type="radio" name="payment_method" value="Bank Transfer" /><span class="payment-symbol">🏦</span><b>Bank Transfer</b><small>Global IME Bank transfer</small></label>
-        <label class="payment-choice"><input type="radio" name="payment_method" value="Khalti" /><span class="payment-symbol">🟣</span><b>Khalti</b><small>Scan QR and pay via Khalti</small></label>
+
       </div>
       <div class="payment-details" id="payment-details">
-        <h3 id="payment-details-title">eSewa Payment</h3>
-        <p>Scan the QR code using your selected payment app.</p>
+        <h3 id="payment-details-title">Bank Transfer</h3>
+        <p>For bank transfer, scan the bank QR code. Orders are not automatically payment-verified; the farm will confirm payment.</p>
         <div class="payment-details-grid">
           <div class="payment-qr-hover" tabindex="0">
             <img id="payment-qr" src="{{ url_for('static',filename='images/esewa.jpeg') }}"
                  data-esewa="{{ url_for('static',filename='images/esewa.jpeg') }}"
                  data-bank="{{ url_for('static',filename='images/global.jpeg') }}"
                  data-khalti="{{ url_for('static',filename='images/khalti.jpeg') }}"
-                 alt="eSewa payment QR code" />
+                 alt="Bank transfer QR code" />
           </div>
           <div>
             <b>After making the payment:</b>
@@ -64,6 +64,7 @@
           </div>
         </div>
       </div>
+      <label class="terms-acceptance"><input type="checkbox" name="accept_terms" value="yes" required /> I have read and agree to the <a href="/terms" target="_blank" rel="noopener noreferrer">Terms of Service</a> and <a href="/privacy" target="_blank" rel="noopener noreferrer">Privacy Policy</a>.</label>
       <input id="cart-json" type="hidden" name="cart_json" />
     </form>
     <aside class="premium-cart cart checkout-cart">
@@ -72,7 +73,7 @@
       <div class="total premium-total"><span>Subtotal</span><b id="checkout-subtotal">Rs. 0</b></div>
       <div class="total"><span>Delivery Charge</span><b id="delivery-fee">Select location</b></div>
       <div class="grand premium-grand"><span>Total</span><b id="checkout-total">Rs. 0</b></div>
-      <div class="checkout-safe"><b>🛡 Your Order is Safe</b><small>We use secure payment methods to keep your information protected.</small></div>
+      <div class="checkout-safe"><b>🛡 Your Order is Safe</b><small>Your order details are sent securely over HTTPS when the site is deployed with HTTPS.</small></div>
       <button class="btn primary full" type="submit" form="checkout-form" id="place-order-button" disabled>🔒 Select Delivery Location First</button>
     </aside>
   </div>
@@ -187,13 +188,13 @@
   const qr = document.getElementById('payment-qr');
   const paymentTitle = document.getElementById('payment-details-title');
   const paymentDetails = document.getElementById('payment-details');
-  const paymentSources = {eSewa: qr.dataset.esewa, 'Bank Transfer': qr.dataset.bank, Khalti: qr.dataset.khalti};
+  const paymentSources = {'Bank Transfer': qr.dataset.bank};
   function showPayment(method) {
     if (method === 'Cash on Delivery') {
       paymentDetails.style.display = 'none';
     } else {
       paymentDetails.style.display = '';
-      qr.src = paymentSources[method] || qr.dataset.esewa;
+      qr.src = paymentSources[method] || qr.dataset.bank;
       qr.alt = method + ' payment QR code';
       paymentTitle.textContent = method + ' Payment';
     }
@@ -201,7 +202,7 @@
   document.querySelectorAll('input[name="payment_method"]').forEach(input => {
     input.addEventListener('change', () => { if (input.checked) showPayment(input.value); });
   });
-  showPayment(document.querySelector('input[name="payment_method"]:checked').value);
+  showPayment(document.querySelector('input[name="payment_method"]:checked')?.value || 'Cash on Delivery');
 })();
 </script>
 {% endblock %}

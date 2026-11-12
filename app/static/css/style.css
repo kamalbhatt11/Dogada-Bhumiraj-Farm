@@ -7455,71 +7455,45 @@ body:has(.animal-panel) .animal-vaccine .btn.primary{
         object-fit: contain !important;
     }
 }
-
 /* =========================================================
-   PRODUCT IMAGES - SHOW THE COMPLETE ORIGINAL PHOTO
-   Do not crop product photos inside the product cards.
-========================================================= */
-
-
-.product-card:hover .product-image img {
-    transform: scale(1.35);
-}
-@media (max-width: 650px) {
-    .product-image {
-        height: auto !important;
-        min-height: 0 !important;
-        aspect-ratio: auto !important;
-    }
-
-    .product-image img {
-        width: 100% !important;
-        height: auto !important;
-        max-height: none !important;
-        object-fit: contain !important;
-    }
-}
-/* =========================================================
-   PRODUCT CARDS - SQUARE + CROPPED IMAGE + HOVER ZOOM
+   PRODUCT CARDS - PRESERVE SAVED IMAGE CROP RATIO
 ========================================================= */
 
 .product-card {
-    aspect-ratio: 1 / 1;
+    aspect-ratio: auto;
+    height: auto;
     overflow: hidden;
     display: flex;
     flex-direction: column;
     border-radius: 22px;
 }
 
-/* Square image area */
+/* Image area follows the actual saved image dimensions */
 .product-image {
     position: relative;
     width: 100%;
-    height: 58%;
+    height: auto;
     min-height: 0;
     overflow: hidden;
     background: #dcebea;
 }
 
-/* Slightly cropped image */
+/* Display the exact saved crop without cropping it again */
 .product-image img {
     width: 100%;
-    height: 100%;
+    height: auto;
+    max-height: none;
     display: block;
 
-    object-fit: cover;
-    object-position: center center;
+    aspect-ratio: auto;
+    object-fit: contain;
+    object-position: center;
 
-    transform: scale(1.12);
-    transition: transform 0.5s ease;
+    transform: none;
+    transition: none;
 }
 
-/* Keep the close-up effect when mouse is over the card */
-.product-card:hover .product-image img {
-    transform: scale(1.28);
-}
-
-/* Product information inside the remaining square space */
+/* Product information */
 .product-content {
     flex: 1;
     min-height: 0;
@@ -7553,20 +7527,20 @@ body:has(.animal-panel) .animal-vaccine .btn.primary{
 @media (max-width: 650px) {
 
     .product-card {
-        aspect-ratio: 1 / 1;
+        aspect-ratio: auto;
+        height: auto;
         border-radius: 17px;
     }
 
     .product-image {
-        height: 56%;
+        height: auto;
     }
 
     .product-image img {
-        transform: scale(1.12);
-    }
-
-    .product-card:hover .product-image img {
-        transform: scale(1.24);
+        width: 100%;
+        height: auto;
+        object-fit: contain;
+        transform: none;
     }
 
     .product-content {
@@ -7595,3 +7569,18 @@ body:has(.animal-panel) .animal-vaccine .btn.primary{
         font-size: 18px;
     }
 }
+
+/* Privacy, legal and accessibility support */
+:focus-visible { outline: 3px solid #9bf4ff !important; outline-offset: 3px; }
+.privacy-choice { position: fixed; z-index: 9999; left: 16px; right: 16px; bottom: 16px; display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:18px; max-width:1100px; margin:auto; padding:20px; border:1px solid #76cfe7; border-radius:16px; background:#071a36; color:#fff; box-shadow:0 10px 45px #0008; }
+.privacy-choice[hidden] { display:none; }
+.privacy-choice p { max-width:680px; margin:8px 0; color:#d9e9f6; }
+.privacy-choice a, .terms-acceptance a { color:#9bf4ff; text-decoration:underline; }
+.privacy-choice-actions { display:flex; flex-wrap:wrap; gap:10px; }
+.terms-acceptance { display:flex !important; align-items:flex-start; gap:10px; line-height:1.6; }
+.terms-acceptance input { width:auto !important; min-width:18px; margin-top:4px !important; }
+.legal-content { max-width:900px; margin:0 auto; padding:36px 24px 70px; color:#eaf7ff; line-height:1.75; }
+.legal-content h1,.legal-content h2 { color:#fff; }
+.legal-content a { color:#9bf4ff; text-decoration:underline; }
+@media (max-width:650px) { .privacy-choice { left:8px; right:8px; bottom:8px; padding:14px; } .privacy-choice-actions { width:100%; } .privacy-choice-actions button { flex:1; } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior:auto !important; animation-duration:0.01ms !important; animation-iteration-count:1 !important; transition-duration:0.01ms !important; } }

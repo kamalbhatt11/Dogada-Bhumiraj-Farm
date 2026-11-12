@@ -75,6 +75,7 @@
     </div>
 
     <form class="premium-form form" method="post" action="/inquiry">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <span class="eyebrow">SEND A MESSAGE</span>
 
       <h2>How can we help?</h2>

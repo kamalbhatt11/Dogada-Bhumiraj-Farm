@@ -1,4 +1,5 @@
 from flask_login import UserMixin
+from datetime import datetime
 from . import db,login_manager
 class Admin(UserMixin,db.Model):
     id=db.Column(db.Integer,primary_key=True); username=db.Column(db.String(80),unique=True,nullable=False); password_hash=db.Column(db.String(255),nullable=False)
@@ -37,3 +38,11 @@ class Vaccination(db.Model):
     next_due = db.Column(db.Date)
     notes = db.Column(db.Text, default='')
     animal = db.relationship('Animal', back_populates='vaccinations')
+
+
+class LoginAttempt(db.Model):
+    """Persistent login throttling keyed by a one-way IP digest."""
+    ip_digest = db.Column(db.String(64), primary_key=True)
+    failures = db.Column(db.Integer, nullable=False, default=0)
+    window_started = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    locked_until = db.Column(db.DateTime)

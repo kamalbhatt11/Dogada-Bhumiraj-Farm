@@ -22,7 +22,8 @@
    <p><strong>Payment:</strong> {{ o.payment_method }}</p>
   </div>
   <div class="admin-side"><b>Rs. {{ '{:,.0f}'.format(o.total) }}</b><small>Subtotal Rs. {{ '{:,.0f}'.format(o.subtotal) }}<br>Delivery Rs. {{ '{:,.0f}'.format(o.delivery_charge or 0) }}</small>
-   <form method="post" action="{{ url_for('admin.order_status',id=o.id) }}"><input type="hidden" name="filter_status" value="{{ selected }}"><label for="status-{{ o.id }}">Order status</label><select id="status-{{ o.id }}" name="status" onchange="this.form.submit()">{% for status in statuses if status != 'All' %}<option value="{{ status }}" {% if o.status == status %}selected{% endif %}>{{ status }}</option>{% endfor %}</select><noscript><button class="btn primary small-btn" type="submit">Save status</button></noscript></form>
+   <form method="post" action="{{ url_for('admin.order_status',id=o.id) }}">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="filter_status" value="{{ selected }}"><label for="status-{{ o.id }}">Order status</label><select id="status-{{ o.id }}" name="status" onchange="this.form.submit()">{% for status in statuses if status != 'All' %}<option value="{{ status }}" {% if o.status == status %}selected{% endif %}>{{ status }}</option>{% endfor %}</select><noscript><button class="btn primary small-btn" type="submit">Save status</button></noscript></form>
   </div>
  </article>
  {% else %}<div class="empty-state"><h3>No {{ selected|lower if selected != 'All' else '' }} orders found</h3><p>Orders will appear here when customers place them.</p></div>{% endfor %}

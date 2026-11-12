@@ -1,11 +1,112 @@
 {% extends "base.html" %}
 {% block title %}Owner Login | Shree Dogada Farm{% endblock %}
+
 {% block content %}
 <section class="auth-page">
     <div class="auth-glow"></div>
+
     <div class="premium-form auth-card form">
-        <div class="auth-icon">🔐</div><span class="eyebrow">PRIVATE AREA</span><h1>Owner login</h1><p>Sign in to manage orders, products and inquiries.</p>
-        <form method="post"><label>Username<input name="username" placeholder="Username" autocomplete="username" required></label><label>Password<input type="password" name="password" placeholder="Password" autocomplete="current-password" required></label><button class="btn primary full">Sign in →</button></form>
+        <div class="auth-icon">🔐</div>
+        <span class="eyebrow">PRIVATE AREA</span>
+
+        <h1>Owner login</h1>
+        <p>Sign in to manage orders, products and inquiries.</p>
+
+        <form method="post">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+            <label>
+                Username
+                <input
+                    name="username"
+                    placeholder="Username"
+                    autocomplete="username"
+                    required
+                >
+            </label>
+
+            <label>
+                Password
+
+                <div class="password-wrapper">
+                    <input
+                        type="password"
+                        name="password"
+                        id="ownerPassword"
+                        placeholder="Password"
+                        autocomplete="current-password"
+                        required
+                    >
+
+                    <button
+                        type="button"
+                        id="togglePassword"
+                        class="password-toggle"
+                        aria-label="Show password"
+                        title="Show password"
+                    >
+                        👁
+                    </button>
+                </div>
+            </label>
+
+            <button type="submit" class="btn primary full">
+                Sign in →
+            </button>
+        </form>
     </div>
 </section>
+
+<style>
+.password-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.password-wrapper input {
+    width: 100%;
+    padding-right: 48px !important;
+}
+
+.password-toggle {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-size: 19px;
+    padding: 5px;
+    opacity: 0.75;
+}
+
+.password-toggle:hover {
+    opacity: 1;
+}
+</style>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const password = document.getElementById("ownerPassword");
+    const toggle = document.getElementById("togglePassword");
+
+    toggle.addEventListener("click", function () {
+        const isHidden = password.type === "password";
+
+        password.type = isHidden ? "text" : "password";
+        toggle.textContent = isHidden ? "🙈" : "👁";
+
+        toggle.setAttribute(
+            "aria-label",
+            isHidden ? "Hide password" : "Show password"
+        );
+
+        toggle.setAttribute(
+            "title",
+            isHidden ? "Hide password" : "Show password"
+        );
+    });
+});
+</script>
 {% endblock %}

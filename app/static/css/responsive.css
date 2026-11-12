@@ -1,0 +1,204 @@
+/* Shree Dogada Farm responsive layer: additive overrides only. */
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; scroll-behavior: smooth; }
+body { min-width: 320px; overflow-x: hidden; }
+img, video, iframe, svg { max-width: 100%; }
+input, select, textarea, button { max-width: 100%; font: inherit; }
+button, a, input, select, textarea { touch-action: manipulation; }
+button, .btn, .qty-btn, .product-button, .owner-menu label { min-height: 42px; }
+main, section, article, aside, header, footer { min-width: 0; }
+.hero-container, .inner-hero-content, .inner-section, .owner-tabs, .owner-top { min-width: 0; }
+.hero h1, .inner-hero h1, h1, h2, h3, p, a, span, strong, small { overflow-wrap: anywhere; }
+.premium-product-grid, .shop-layout, .checkout-layout, .contact-grid, .about-grid, .livestock-grid { min-width: 0; }
+.premium-product, .product-card, .premium-cart, .premium-form, .admin-card, .admin-edit { min-width: 0; }
+.premium-product img, .product-card img, .animal-photo, .animal-thumb { max-width: 100%; height: auto; }
+.qty-row { flex-wrap: wrap; align-items: center; }
+.qty-row button, .qty-btn, .product-button { min-width: 42px; min-height: 42px; }
+.order-filters { overflow-x: auto; flex-wrap: nowrap; padding-bottom: 8px; -webkit-overflow-scrolling: touch; }
+.order-filter { flex: 0 0 auto; white-space: nowrap; }
+.orders-only .order-card, .admin-card { overflow-wrap: anywhere; }
+.orders-only .admin-side, .admin-side { min-width: 0; }
+.owner-main, .owner-view, .owner-menu { min-width: 0; }
+.owner-view .stats { grid-template-columns: repeat(auto-fit, minmax(min(100%, 145px), 1fr)); }
+.owner-view table, .orders-table-wrap { display: block; max-width: 100%; overflow-x: auto; }
+.inner-footer-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+
+@media (max-width: 1024px) {
+  .hero-container { gap: 28px; }
+  .inner-nav { gap: 2px; }
+  .inner-nav a { padding-left: 9px; padding-right: 9px; }
+  .shop-layout, .checkout-layout { grid-template-columns: minmax(0, 1fr); }
+  .premium-cart { position: static; width: 100%; }
+  .checkout-redesign .checkout-layout { grid-template-columns: minmax(0, 1fr); }
+  .owner-layout { grid-template-columns: 1fr; }
+  .owner-menu { position: static; }
+}
+
+@media (max-width: 780px) {
+  .navbar { gap: 10px; }
+  .hero { min-height: auto; }
+  .hero-container { grid-template-columns: minmax(0, 1fr); }
+  .hero-content { width: 100%; max-width: 100%; }
+  .hero h1 { font-size: clamp(2.25rem, 9vw, 3.5rem); line-height: 1.08; }
+  .hero-description { max-width: 100%; }
+  .hero-buttons { flex-wrap: wrap; }
+  .hero-gallery { width: 100%; max-width: 100%; height: auto; min-height: 360px; }
+  .main-photo, .second-photo { max-width: 78%; height: auto; }
+  .feature-grid, .features-grid, .product-grid, .trust-grid, .quick-features { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .premium-product-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .inner-nav-wrap { position: relative; }
+  .inner-menu-btn { min-width: 44px; min-height: 44px; }
+  .inner-nav.open { z-index: 1000; max-height: calc(100vh - 100px); overflow-y: auto; }
+  .inner-section { padding-left: 5%; padding-right: 5%; }
+  .inner-hero { padding-left: 6%; padding-right: 6%; }
+  .inner-hero h1 { font-size: clamp(2.1rem, 7vw, 2.8rem); }
+  .inner-footer-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 26px; }
+  .owner-tabs { padding-left: 12px; padding-right: 12px; margin-top: 20px; }
+  .owner-top { padding-left: 16px; padding-right: 16px; flex-wrap: wrap; }
+  .owner-menu { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; padding: 10px; }
+  .owner-menu .menu-title { grid-column: 1 / -1; }
+  .owner-menu label { text-align: center; padding: 11px 6px; font-size: 13px; }
+  .owner-main { padding: 18px; }
+  .owner-view .admin-heading { align-items: flex-start; }
+  .owner-view .admin-card { flex-direction: column; }
+  .owner-view .admin-side { width: 100%; text-align: left; }
+  .owner-view .admin-side form { width: 100%; margin-left: 0; }
+  .owner-view .admin-product-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .payment-options { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .payment-details-grid { grid-template-columns: minmax(0, 1fr); }
+  .payment-details-grid img { max-width: 180px; }
+}
+
+@media (max-width: 520px) {
+  .brand-text strong { font-size: 15px; }
+  .brand-text small { font-size: 10px; }
+  .feature-grid, .features-grid, .product-grid, .trust-grid, .quick-features, .premium-product-grid, .owner-view .admin-product-grid { grid-template-columns: minmax(0, 1fr); }
+  .hero-buttons > *, .success-actions > *, .privacy-choice-actions > * { width: 100%; }
+  .premium-form, .premium-cart, .success-card { padding: 20px 16px; }
+  .form-two { grid-template-columns: minmax(0, 1fr); }
+  .payment-options { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .inner-footer-grid { grid-template-columns: minmax(0, 1fr); }
+  .inner-footer-bottom { gap: 8px; }
+  .owner-top { align-items: flex-start; }
+  .owner-menu { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .owner-menu label { font-size: 12px; }
+  .owner-main { padding: 13px; }
+  .owner-view .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .owner-view .stats > div { padding: 13px; }
+  .owner-view .stats b { font-size: 1.25rem; }
+  .order-card { padding: 15px !important; }
+  .order-details { min-width: 0; }
+  .admin-heading h2 { font-size: 28px; }
+  .checkout-redesign .premium-form, .checkout-redesign .checkout-cart { padding: 17px; }
+  .privacy-choice { max-height: 75vh; overflow-y: auto; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}
+
+/* Laptop and small-desktop product-card readability fixes.
+   These overrides keep the existing colours, images and card design. */
+@media (min-width: 761px) {
+  .products-section .section-container {
+    width: min(1250px, 92%);
+  }
+
+  .products-section .product-grid {
+    gap: 20px;
+  }
+
+  .products-section .product-image {
+    height: clamp(165px, 18vw, 220px);
+  }
+
+  .products-section .product-content {
+    padding: 18px 20px 19px !important;
+  }
+
+  .products-section .product-category {
+    font-size: 11px !important;
+    letter-spacing: 1.5px;
+  }
+
+  .products-section .product-content h3 {
+    font-size: clamp(21px, 2vw, 25px) !important;
+    line-height: 1.2;
+  }
+
+  .products-section .product-content p {
+    font-size: 14px !important;
+    line-height: 1.45;
+  }
+
+  .products-section .product-bottom {
+    margin-top: 14px;
+  }
+
+  .products-section .product-bottom strong {
+    font-size: 20px !important;
+  }
+
+  .products-section .product-bottom span {
+    font-size: 12px !important;
+  }
+
+  .products-section .product-button {
+    width: 42px;
+    height: 42px;
+    min-width: 42px;
+    min-height: 42px;
+    font-size: 25px;
+  }
+}
+
+/* Give laptop-sized windows roomier cards instead of squeezing three
+   narrow cards into a medium-width viewport. */
+@media (min-width: 761px) and (max-width: 1024px) {
+  .products-section .product-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 20px;
+  }
+
+  .products-section .product-image {
+    height: 190px;
+  }
+}
+/* Laptop product card layout fix */
+@media (min-width: 761px) and (max-width: 1024px) {
+
+  .products-section .product-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 24px !important;
+  }
+
+  .products-section .product-card {
+    aspect-ratio: auto !important;
+    min-height: 460px;
+    height: auto;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .products-section .product-image {
+    height: 210px !important;
+    min-height: 210px;
+    flex-shrink: 0;
+  }
+
+  .products-section .product-content {
+    flex: 1;
+    min-height: 200px;
+    padding: 18px 20px !important;
+  }
+
+  .products-section .product-content h3 {
+    font-size: 23px !important;
+  }
+
+  .products-section .product-content p {
+    font-size: 14px !important;
+    line-height: 1.5;
+  }
+}

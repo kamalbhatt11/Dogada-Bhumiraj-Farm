@@ -26,16 +26,12 @@
     <meta property="og:description" content="Fresh dairy products and healthy livestock from Shree Dogada Farm in Dhangadhi-13, Sudurpashchim, Nepal.">
     <meta property="og:site_name" content="Shree Dogada Bhumiraj Pashupanchhi Farm">
 
-    <link rel="canonical" href="https://shreedogadabhumiraj.onrender.com{{ request.path }}">
-
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet">
+    <link rel="canonical" href="{{ config.SITE_URL.rstrip('/') }}{{ request.path }}">
 
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/responsive.css') }}">
 
-    <script defer src="{{ url_for('static', filename='js/app.js') }}"></script>
+    <script defer src="{{ url_for('static', filename='js/app.js') }}?v=5"></script>
 </head>
 
 <body class="inner-page">
@@ -62,6 +58,7 @@
             <a href="/about">Farm</a>
             <a href="/contact">Contact</a>
             <a href="/owner/login">Owner</a>
+            <a href="/dairy/customer/login">Customer Login</a>
             <a class="inner-cart-link" href="/checkout">🛒 <i id="cart-count">0</i></a>
         </nav>
 
@@ -106,6 +103,11 @@
             <a href="/products">Shop</a>
             <a href="/livestock">Livestock</a>
             <a href="/about">Our Farm</a>
+            <a href="/privacy">Privacy Policy</a>
+            <a href="/terms">Terms of Service</a>
+            <a href="/subprocessors">Subprocessors</a>
+            <a href="/dpa">Business DPA</a>
+            <a href="/data-rights">Export / Delete Data</a>
         </div>
 
         <div>
@@ -152,6 +154,93 @@ document.addEventListener("DOMContentLoaded", () => {
     const btn = document.querySelector(".inner-menu-btn");
     const nav = document.querySelector(".inner-nav");
     btn?.addEventListener("click", () => nav?.classList.toggle("open"));
+});
+</script>
+
+<section id="privacy-choice" class="privacy-choice" role="dialog" aria-labelledby="privacy-choice-title" aria-describedby="privacy-choice-description" hidden>
+  <div><strong id="privacy-choice-title">Privacy choices</strong>
+    <p id="privacy-choice-description">This site uses essential browser storage for your cart. We do not currently load analytics or advertising trackers. Optional preferences are stored only to remember your choice.</p>
+    <a href="/privacy">Read our Privacy Policy</a>
+  </div>
+  <div class="privacy-choice-actions">
+    <button type="button" class="btn ghost" id="privacy-reject">Reject optional</button>
+    <button type="button" class="btn primary" id="privacy-accept">Accept</button>
+  </div>
+</section>
+<script>
+(function(){
+  const key='sd_privacy_choice_v1';
+  const banner=document.getElementById('privacy-choice');
+  let choice=null; try { choice=localStorage.getItem(key); } catch(e) {}
+  if (!choice) banner.hidden=false;
+  function setChoice(value){ try{localStorage.setItem(key,value);}catch(e){} banner.hidden=true; }
+  document.getElementById('privacy-accept').addEventListener('click',()=>setChoice('accepted'));
+  document.getElementById('privacy-reject').addEventListener('click',()=>setChoice('rejected'));
+})();
+</script>
+
+<style>
+#site-image-viewer[hidden] { display: none !important; }
+#site-image-viewer {
+    position: fixed; inset: 0; z-index: 100000;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px; background: rgba(0,0,0,.92);
+}
+#site-image-viewer img {
+    display: block; max-width: 94vw; max-height: 90vh;
+    width: auto; height: auto; object-fit: contain;
+    border-radius: 10px; box-shadow: 0 12px 50px rgba(0,0,0,.5);
+}
+#site-image-viewer-close {
+    position: absolute; top: 12px; right: 20px; border: 0;
+    color: white; background: transparent; font-size: 42px;
+    line-height: 1; cursor: pointer;
+}
+main img:not(.crop-preview):not(.cropper-hidden) { cursor: zoom-in; }
+@media (max-width: 600px) {
+    #site-image-viewer { padding: 12px; }
+    #site-image-viewer img { max-width: 96vw; max-height: 86vh; }
+}
+</style>
+<div id="site-image-viewer" hidden aria-hidden="true" role="dialog" aria-label="Full-size image viewer">
+    <button id="site-image-viewer-close" type="button" aria-label="Close image">&times;</button>
+    <img src="" alt="">
+</div>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const viewer = document.getElementById('site-image-viewer');
+    const fullImage = viewer.querySelector('img');
+    const closeButton = document.getElementById('site-image-viewer-close');
+
+    function closeViewer() {
+        viewer.hidden = true;
+        viewer.setAttribute('aria-hidden', 'true');
+        fullImage.removeAttribute('src');
+        document.body.style.overflow = '';
+    }
+
+    document.querySelector('main').addEventListener('click', function (event) {
+        const image = event.target.closest('img');
+        if (!image || image.classList.contains('crop-preview') || image.closest('.cropper-container')) return;
+        if (image.closest('button, label')) return;
+        const imageLink = image.closest('a');
+        if (imageLink) event.preventDefault();
+        if (!image.currentSrc && !image.src) return;
+
+        fullImage.src = image.currentSrc || image.src;
+        fullImage.alt = image.alt || 'Full-size image';
+        viewer.hidden = false;
+        viewer.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+    });
+
+    closeButton.addEventListener('click', closeViewer);
+    viewer.addEventListener('click', function (event) {
+        if (event.target === viewer) closeViewer();
+    });
+    document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape' && !viewer.hidden) closeViewer();
+    });
 });
 </script>
 

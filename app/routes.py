@@ -1,21 +1,35 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
+from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, send_file
 from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.security import check_password_hash, generate_password_hash
+from io import BytesIO
+from PIL import Image, ImageOps, UnidentifiedImageError
+import os
 from . import db
-from .models import Product, Order, Inquiry, Admin, Animal, Vaccination
+from .models import Product, Order, Inquiry, Admin, Animal, Vaccination, LoginAttempt
 import json
-import uuid
 import math
 import requests
 from datetime import date, datetime, timedelta
 from pathlib import Path
 from werkzeug.utils import secure_filename
-from flask import current_app, abort
+from flask import current_app, abort, session
 from sqlalchemy import or_
 import secrets
+import time
+import hmac
+import hashlib
 
 main = Blueprint('main', __name__)
 admin = Blueprint('admin', __name__)
+
+# Database-backed login throttle: persists across app workers/restarts.
+_LOGIN_WINDOW_SECONDS = 15 * 60
+_LOGIN_LOCK_SECONDS = 15 * 60
+_LOGIN_MAX_ATTEMPTS = 5
+
+def login_ip_digest(ip_address):
+    key = current_app.config["SECRET_KEY"].encode("utf-8")
+    return hmac.new(key, (ip_address or "unknown").encode("utf-8"), hashlib.sha256).hexdigest()
 
 # Verify these coordinates point to your farm's actual delivery starting point.
 FARM_LAT = 28.756394
@@ -60,7 +74,37 @@ def shop():
 def products():
     return render_template('products.html', products=Product.query.filter_by(active=True).all())
 
+@main.get('/product-image/<slug>')
+def product_image(slug):
+    from flask import send_from_directory
 
+    product = Product.query.filter_by(slug=slug, active=True).first_or_404()
+
+    folder = Path(current_app.instance_path) / 'product_uploads'
+    uploaded_image = folder / f'product_{product.id}.jpg'
+
+    if uploaded_image.is_file():
+        return send_from_directory(folder, uploaded_image.name, max_age=0)
+
+    fallback_images = {
+        'cow-milk': 'cowmilk.jpeg',
+        'buffalo-milk': 'buffalomilk.jpeg',
+        'dahi': 'dhai.jpeg',
+        'mahi': 'mahi.jpeg',
+        'paneer': 'paneer.jpeg',
+        'ghee': 'ghee.jpg'
+    }
+
+    fallback = fallback_images.get(product.slug)
+
+    if fallback:
+        return send_from_directory(
+            current_app.static_folder + '/images',
+            fallback,
+            max_age=0
+        )
+
+    abort(404)
 @main.get('/livestock')
 def livestock():
     return render_template('livestock.html', animals=Animal.query.filter_by(status='Available').order_by(Animal.animal_type, Animal.id.desc()).all())
@@ -74,6 +118,66 @@ def about():
 @main.get('/contact')
 def contact():
     return render_template('contact.html')
+
+
+@main.get('/privacy')
+def privacy_policy():
+    return render_template('privacy.html')
+
+
+@main.get('/terms')
+def terms_of_service():
+    return render_template('terms.html')
+
+
+@main.get('/subprocessors')
+def subprocessors():
+    return render_template('subprocessors.html')
+
+
+@main.get('/dpa')
+def dpa():
+    return render_template('dpa.html')
+
+
+@main.route('/data-rights', methods=['GET', 'POST'])
+def data_rights():
+    if request.method == 'GET':
+        return render_template('data_rights.html')
+    order_code = request.form.get('order_code', '').strip().upper()
+    phone = request.form.get('phone', '').strip()
+    action = request.form.get('action', 'export')
+    order = Order.query.filter_by(order_code=order_code, phone=phone).first()
+    if not order:
+        flash('We could not verify that order using those details. Check the order code and phone number.', 'error')
+        return redirect(url_for('main.data_rights'))
+    if action == 'delete':
+        # Preserve a minimal transaction record where needed for accounting/disputes,
+        # while removing direct customer identifiers and free-text personal details.
+        order.customer_name = '[deleted]'
+        order.phone = '[deleted]'
+        order.email = None
+        order.address = '[deleted]'
+        order.notes = None
+        db.session.commit()
+        flash('Personal details for this order have been erased from the active order record. Limited transaction data may be retained where legally necessary.', 'success')
+        return redirect(url_for('main.data_rights'))
+    if action != 'export':
+        flash('Choose a valid data request.', 'error')
+        return redirect(url_for('main.data_rights'))
+    payload = {
+        'order_code': order.order_code, 'customer_name': order.customer_name,
+        'phone': order.phone, 'email': order.email, 'address': order.address,
+        'items': json.loads(order.items_json), 'subtotal': order.subtotal,
+        'delivery_charge': order.delivery_charge, 'total': order.total,
+        'notes': order.notes, 'status': order.status,
+        'payment_method': order.payment_method,
+        'created_at': order.created_at.isoformat() if order.created_at else None
+    }
+    from flask import Response
+    return Response(json.dumps(payload, ensure_ascii=False, indent=2), mimetype='application/json',
+                    headers={'Content-Disposition': f'attachment; filename="{order.order_code}-data-export.json"',
+                             'Cache-Control': 'no-store'})
 
 
 @main.get('/checkout')
@@ -107,13 +211,20 @@ def place_order():
     email = request.form.get('email', '').strip()
     address = request.form.get('address', '').strip()
     notes = request.form.get('notes', '').strip()
+    accepted_terms = request.form.get('accept_terms') == 'yes'
     payment = request.form.get('payment_method', 'Cash on Delivery')
-    allowed_payments = {'Cash on Delivery', 'eSewa', 'Bank Transfer', 'Khalti'}
+    allowed_payments = {'Cash on Delivery', 'Bank Transfer'}
     if payment not in allowed_payments:
         flash('Please select a valid payment method.', 'error')
         return redirect(url_for('main.checkout'))
+    if not accepted_terms:
+        flash('Please accept the Terms of Service and Privacy Policy to place an order.', 'error')
+        return redirect(url_for('main.checkout'))
     if not name or not phone or not address or not cart:
         flash('Please complete your details and add products.', 'error')
+        return redirect(url_for('main.checkout'))
+    if len(name) > 120 or len(phone) > 40 or len(email) > 160 or len(address) > 1500 or len(notes) > 1000:
+        flash('One or more fields are too long. Please review your details.', 'error')
         return redirect(url_for('main.checkout'))
 
     try:
@@ -151,7 +262,7 @@ def place_order():
         flash('Add at least one priced product.', 'error')
         return redirect(url_for('main.products'))
 
-    code = 'SD-' + uuid.uuid4().hex[:8].upper()
+    code = 'SD-' + secrets.token_hex(13).upper()
     # Existing Order model has no latitude/longitude columns; preserve the
     # selected coordinates and road distance in the existing address field.
     delivery_address = (f'{address} | Map: {lat:.6f},{lng:.6f} '
@@ -169,6 +280,7 @@ def place_order():
 
 @main.get('/order-success/<code>')
 def success(code):
+    # The high-entropy order code is an unguessable receipt reference.
     return render_template('order_success.html', order=Order.query.filter_by(order_code=code).first_or_404())
 
 
@@ -181,6 +293,9 @@ def inquiry():
     if not name or not phone or not msg:
         flash('Please complete the required fields.', 'error')
         return redirect(url_for('main.contact'))
+    if len(name) > 120 or len(phone) > 40 or len(email) > 160 or len(msg) > 3000:
+        flash('One or more fields are too long. Please review your message.', 'error')
+        return redirect(url_for('main.contact'))
     db.session.add(Inquiry(name=name, phone=phone, email=email, message=msg))
     db.session.commit()
     flash('Your message has been sent.', 'success')
@@ -191,14 +306,45 @@ def inquiry():
 def login():
     if current_user.is_authenticated:
         return redirect(url_for('admin.dashboard'))
-    if request.method == 'POST':
-        user = Admin.query.filter_by(username=request.form.get('username', '')).first()
-        if user and check_password_hash(user.password_hash, request.form.get('password', '')):
-            login_user(user)
-            return redirect(url_for('admin.dashboard'))
-        flash('Invalid owner login.', 'error')
-    return render_template('owner_login.html')
 
+    digest = login_ip_digest(request.remote_addr)
+    now = datetime.utcnow()
+    attempt = db.session.get(LoginAttempt, digest)
+
+    if attempt and attempt.locked_until and attempt.locked_until > now:
+        remaining = max(1, int((attempt.locked_until - now).total_seconds() / 60) + 1)
+        flash(f'Too many failed attempts. Try again in about {remaining} minute(s).', 'error')
+        return render_template('owner_login.html'), 429
+
+    if request.method == 'POST':
+        username = request.form.get('username', '').strip()[:80]
+        password = request.form.get('password', '')
+        user = Admin.query.filter_by(username=username).first()
+
+        if user and check_password_hash(user.password_hash, password):
+            if attempt:
+                db.session.delete(attempt)
+                db.session.commit()
+            session.clear()
+            login_user(user, remember=False, fresh=True)
+            return redirect(url_for('admin.dashboard'))
+
+        # Only persist a throttle row after an unsuccessful authentication.
+        if not attempt:
+            attempt = LoginAttempt(ip_digest=digest, failures=0, window_started=now)
+            db.session.add(attempt)
+        elif (now - attempt.window_started).total_seconds() >= _LOGIN_WINDOW_SECONDS:
+            attempt.failures = 0
+            attempt.window_started = now
+            attempt.locked_until = None
+
+        attempt.failures += 1
+        if attempt.failures >= _LOGIN_MAX_ATTEMPTS:
+            attempt.locked_until = now + timedelta(seconds=_LOGIN_LOCK_SECONDS)
+        db.session.commit()
+        flash('Invalid owner login.', 'error')
+
+    return render_template('owner_login.html')
 
 @admin.get('/dashboard')
 @login_required
@@ -221,15 +367,30 @@ def dashboard():
 def orders():
     selected = request.args.get('status', 'All')
     statuses = ['All', 'New', 'Confirmed', 'Preparing', 'Out for Delivery', 'Delivered', 'Cancelled']
+
     if selected not in statuses:
         selected = 'All'
+
     query = Order.query
+
     if selected != 'All':
         query = query.filter_by(status=selected)
+
     all_orders = Order.query.all()
-    return render_template('orders_admin.html', orders=query.order_by(Order.created_at.desc()).all(),
-                           selected=selected, statuses=statuses,
-                           counts={status: sum(1 for order in all_orders if status == 'All' or order.status == status) for status in statuses})
+
+    return render_template(
+        'orders_admin.html',
+        orders=query.order_by(Order.created_at.desc()).all(),
+        selected=selected,
+        statuses=statuses,
+        counts={
+            status: sum(
+                1 for order in all_orders
+                if status == 'All' or order.status == status
+            )
+            for status in statuses
+        }
+    )
 
 
 @admin.post('/order/<int:id>/status')
@@ -237,33 +398,153 @@ def orders():
 def order_status(id):
     order = Order.query.get_or_404(id)
     status = request.form.get('status')
-    allowed = ['New', 'Confirmed', 'Preparing', 'Out for Delivery', 'Delivered', 'Cancelled']
+
+    allowed = [
+        'New', 'Confirmed', 'Preparing',
+        'Out for Delivery', 'Delivered', 'Cancelled'
+    ]
+
     if status in allowed:
         order.status = status
         db.session.commit()
-    return redirect(url_for('admin.orders', status=request.form.get('filter_status', 'All')))
+
+    return redirect(
+        url_for('admin.orders', status=request.form.get('filter_status', 'All'))
+    )
 
 
 @admin.post('/product/<int:id>/save')
 @login_required
 def product_save(id):
     product = Product.query.get_or_404(id)
+
     product.name = request.form.get('name', product.name)
     product.unit = request.form.get('unit', product.unit)
     product.description = request.form.get('description', product.description)
+
     price = request.form.get('price', '').strip()
-    product.price = float(price) if price else None
+
+    try:
+        parsed_price = float(price) if price else None
+
+        if parsed_price is not None and (
+            not math.isfinite(parsed_price)
+            or parsed_price < 0
+            or parsed_price > 100000000
+        ):
+            raise ValueError
+
+    except (ValueError, TypeError, OverflowError):
+        flash('Enter a valid non-negative price up to Rs. 100,000,000.', 'error')
+        return redirect(url_for('admin.dashboard') + '#products')
+
+    product.price = parsed_price
     product.active = request.form.get('active') == 'on'
+
     db.session.commit()
+
     flash('Product updated.', 'success')
     return redirect(url_for('admin.dashboard') + '#products')
 
 
-@admin.post('/inquiry/<int:id>/status')
+# Secure product image upload
+@admin.post('/product/<int:id>/image')
+@login_required
+def product_image_upload(id):
+
+    product = Product.query.get_or_404(id)
+    uploaded = request.files.get('image')
+
+    if not uploaded or not uploaded.filename:
+        return jsonify(
+            success=False,
+            error='Please select an image.'
+        ), 400
+
+    try:
+        raw = uploaded.read(5 * 1024 * 1024 + 1)
+
+        if not raw or len(raw) > 5 * 1024 * 1024:
+            raise ValueError('Image must be 5 MB or smaller.')
+
+        try:
+            with Image.open(BytesIO(raw)) as check:
+
+                if check.format not in ('JPEG', 'PNG', 'WEBP'):
+                    raise ValueError(
+                        'Only JPG, PNG and WebP images are allowed.'
+                    )
+
+                if check.width < 100 or check.height < 100:
+                    raise ValueError(
+                        'Image dimensions must be at least 100 × 100 pixels.'
+                    )
+
+                if check.width > 12000 or check.height > 12000:
+                    raise ValueError('Image dimensions are too large.')
+
+                if check.width * check.height > 40000000:
+                    raise ValueError('Image resolution is too large.')
+
+                check.verify()
+
+            with Image.open(BytesIO(raw)) as original:
+
+                image = ImageOps.exif_transpose(original)
+                image = image.convert('RGB')
+
+                output = BytesIO()
+
+                image.save(
+                    output,
+                    format='JPEG',
+                    quality=88,
+                    optimize=True
+                )
+
+                output.seek(0)
+
+        except (UnidentifiedImageError, OSError):
+            raise ValueError('The selected file is not a valid image.')
+
+        folder = Path(current_app.instance_path) / 'product_uploads'
+        folder.mkdir(parents=True, exist_ok=True)
+
+        destination = folder / f'product_{product.id}.jpg'
+
+        temporary = folder / (
+            f'product_{product.id}_{secrets.token_hex(8)}.tmp'
+        )
+
+        temporary.write_bytes(output.getvalue())
+        os.replace(temporary, destination)
+
+        return jsonify(
+            success=True,
+            message='Product image saved successfully.'
+        )
+
+    except ValueError as error:
+        return jsonify(
+            success=False,
+            error=str(error)
+        ), 400
+
+    except Exception:
+        current_app.logger.exception('Product image upload failed.')
+
+        return jsonify(
+            success=False,
+            error='Unable to save the image. Please try again.'
+        ), 500
 @login_required
 def inquiry_status(id):
     inquiry_obj = Inquiry.query.get_or_404(id)
-    inquiry_obj.status = request.form.get('status', 'New')
+    status = request.form.get('status', 'New')
+    if status not in {'New', 'Contacted', 'Closed'}:
+        flash('Invalid inquiry status.', 'error')
+        return redirect(url_for('admin.dashboard') + '#inquiries')
+    inquiry_obj.status = status
     db.session.commit()
     return redirect(url_for('admin.dashboard') + '#inquiries')
 
@@ -273,8 +554,8 @@ def inquiry_status(id):
 def change_password():
     if not check_password_hash(current_user.password_hash, request.form.get('old_password', '')):
         flash('Current password is incorrect.', 'error')
-    elif len(request.form.get('new_password', '')) < 10:
-        flash('New password must be at least 10 characters.', 'error')
+    elif len(request.form.get('new_password', '')) < 12:
+        flash('New password must be at least 12 characters.', 'error')
     else:
         current_user.password_hash = generate_password_hash(request.form['new_password'])
         db.session.commit()
@@ -282,43 +563,30 @@ def change_password():
     return redirect(url_for('admin.dashboard') + '#security')
 
 
-@admin.get('/logout')
+@admin.post('/logout')
 @login_required
 def logout():
     logout_user()
+    session.clear()
     return redirect(url_for('main.home'))
-@main.route("/sitemap.xml")
+@main.get("/sitemap.xml")
 def sitemap():
-    pages = [
-        "/",
-        "/products",
-        "/livestock",
-        "/about",
-        "/contact"
-    ]
-
-    sitemap_xml = """<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-"""
-
+    site_url = current_app.config.get("SITE_URL", "https://shreedogadabhumiraj.onrender.com").rstrip("/")
+    pages = ["/", "/products", "/livestock", "/about", "/contact", "/privacy", "/terms", "/subprocessors", "/dpa", "/data-rights"]
+    sitemap_xml = ['<?xml version="1.0" encoding="UTF-8"?>',
+                   '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
     for page in pages:
-        sitemap_xml += f"""    <url>
-        <loc>https://shreedogadabhumiraj.onrender.com{page}</loc>
-    </url>
-"""
+        sitemap_xml.append(f"  <url><loc>{site_url}{page}</loc></url>")
+    sitemap_xml.append("</urlset>")
+    from flask import Response
+    return Response("\\n".join(sitemap_xml), status=200, mimetype="application/xml")
 
-    sitemap_xml += "</urlset>"
 
-    return sitemap_xml, 200, {"Content-Type": "application/xml"}
-
-@main.route("/robots.txt")
+@main.get("/robots.txt")
 def robots():
-    robots_txt = """User-agent: *
-Allow: /
+    site_url = current_app.config.get("SITE_URL", "https://shreedogadabhumiraj.onrender.com").rstrip("/")
+    return f"User-agent: *\\nAllow: /\\n\\nSitemap: {site_url}/sitemap.xml\\n", 200, {"Content-Type": "text/plain; charset=utf-8"}
 
-Sitemap: https://shreedogadabhumiraj.onrender.com/sitemap.xml
-"""
-    return robots_txt, 200, {"Content-Type": "text/plain"}
 
 # Individual animal management: private routes, with animal-specific vaccination records.
 ANIMAL_TYPES = {'Cow', 'Buffalo', 'Calf'}
@@ -378,12 +646,16 @@ def fill_animal(animal):
         raise ValueError('Enter a valid animal ID, type, breed, gender and status.')
     if Animal.query.filter(Animal.animal_id == animal_id, Animal.id != (animal.id or -1)).first():
         raise ValueError('That animal ID already exists.')
+    if len(animal_id) > 40 or len(breed) > 100:
+        raise ValueError('Animal ID must be at most 40 characters and breed at most 100 characters.')
     age = float(request.form.get('age_years', '0'))
     milk = request.form.get('milk_liters', '').strip()
     price = request.form.get('price', '').strip()
     milk = float(milk) if milk else None
     price = float(price) if price else None
-    if age < 0 or age > 80 or milk is not None and (milk < 0 or milk > 150) or price is not None and (price < 0 or price > 100000000):
+    if (not math.isfinite(age) or age < 0 or age > 80
+            or milk is not None and (not math.isfinite(milk) or milk < 0 or milk > 150)
+            or price is not None and (not math.isfinite(price) or price < 0 or price > 100000000)):
         raise ValueError('Enter valid age, milk production and price values.')
     photo = save_animal_photo(request.files.get('photo'), animal.photo)
     animal.animal_id, animal.animal_type, animal.breed, animal.gender = animal_id, kind, breed, gender
